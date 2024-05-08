@@ -7,7 +7,14 @@
     </div>
     <div v-if="tasks.length === 0" class="task-list-container">No tasks yet. Add one above!</div>
     <div v-else class="task-list-container">
-      <TaskItem v-for="task in sortedTasks" :key="task.id" :task="task" @toggle-task="toggleTask" @delete-task="deleteTask" @toggle-priority="togglePriority" />
+      <TaskItem
+        v-for="task in sortedTasks"
+        :key="task.id"
+        :task="task"
+        @toggle-task="toggleTask"
+        @delete-task="deleteTask"
+        @toggle-priority="togglePriority"
+      />
     </div>
   </div>
 </template>
@@ -49,6 +56,7 @@ export default {
         category: category
       };
       this.tasks.push(newTask);
+      this.saveTasksToLocalStorage();
     },
     changeSortKey(key) {
       this.sortKey = key;
@@ -57,16 +65,29 @@ export default {
       const task = this.tasks.find(task => task.id === taskId);
       if (task) {
         task.completed = !task.completed;
+        this.saveTasksToLocalStorage();
       }
     },
     deleteTask(taskId) {
       this.tasks = this.tasks.filter(task => task.id !== taskId);
+      this.saveTasksToLocalStorage();
     },
     togglePriority(taskId) {
       const task = this.tasks.find(task => task.id === taskId);
       if (task) {
         task.priority = !task.priority;
+        this.saveTasksToLocalStorage();
       }
+    },
+    saveTasksToLocalStorage() {
+      const serializedTasks = JSON.stringify(this.tasks);
+      localStorage.setItem('tasks', serializedTasks);
+    }
+  },
+  mounted() {
+    const savedTasks = localStorage.getItem('tasks');
+    if (savedTasks) {
+      this.tasks = JSON.parse(savedTasks);
     }
   }
 };
@@ -80,7 +101,7 @@ export default {
   padding: 10px;
   background-color: #a1bedb;
   border-radius: 5px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   max-width: 280px; /* Adjust the max-width as needed */
   margin: 0 auto; /* Center the container horizontally */
 }
@@ -99,7 +120,6 @@ export default {
 }
 
 .task-list-container {
-  margin-top: 20px; 
+  margin-top: 20px;
 }
 </style>
-
