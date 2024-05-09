@@ -4,8 +4,12 @@
     <div class="task-input">
       <button @click="changeSortKey('dueDate')" class="task-add-button">Sort by Due Date</button>
       <button @click="changeSortKey('priority')" class="task-add-button">Sort by Priority</button>
+      <select v-model="selectedCategory" @change="filterByCategory" class="task-add-button">
+        <option value="">All Categories</option>
+        <option v-for="category in uniqueCategories" :key="category" :value="category">{{ category }}</option>
+      </select>
     </div>
-    <div v-if="tasks.length === 0" class="task-list-container">No tasks yet. Add one above!</div>
+    <div v-if="filteredTasks.length === 0" class="task-list-container">No tasks yet. Add one above!</div>
     <div v-else class="task-list-container">
       <TaskItem
         v-for="task in sortedTasks"
@@ -14,6 +18,7 @@
         @toggle-task="toggleTask"
         @delete-task="deleteTask"
         @toggle-priority="togglePriority"
+        @edit-task="editTask"
       />
     </div>
   </div>
@@ -31,35 +36,56 @@ export default {
   data() {
     return {
       tasks: [],
-      sortKey: 'priority' // default sort key
+      sortKey: 'priority', // default sort key
+      selectedCategory: ''
     };
   },
   computed: {
     sortedTasks() {
-      return [...this.tasks].sort((a, b) => {
+      return [...this.filteredTasks].sort((a, b) => {
         if (this.sortKey === 'dueDate') {
           return new Date(a.dueDate) - new Date(b.dueDate);
         } else {
           return b.priority - a.priority;
         }
       });
+    },
+    filteredTasks() {
+      if (this.selectedCategory === '') {
+        return this.tasks;
+      }
+      return this.tasks.filter(task => task.category === this.selectedCategory);
+    },
+    uniqueCategories() {
+      return [...new Set(this.tasks.map(task => task.category))];
     }
   },
   methods: {
     addTask(taskText, dueDate, category) {
+      const colors = {
+        Work: '#FFCCCB',
+        Personal: '#CCFFCC',
+        Hobby: '#CCCCFF',
+        Other: '#FFFF99'
+      };
+
       const newTask = {
         id: Date.now(),
         text: taskText,
         completed: false,
         priority: false,
         dueDate: dueDate,
-        category: category
+        category: category,
+        color: colors[category] || '#DDDDDD'
       };
       this.tasks.push(newTask);
       this.saveTasksToLocalStorage();
     },
     changeSortKey(key) {
       this.sortKey = key;
+    },
+    filterByCategory() {
+      // This method is intentionally empty; the computed property handles the filtering
     },
     toggleTask(taskId) {
       const task = this.tasks.find(task => task.id === taskId);
@@ -79,15 +105,30 @@ export default {
         this.saveTasksToLocalStorage();
       }
     },
+    editTask(editedTask) {
+      const taskIndex = this.tasks.findIndex(task => task.id === editedTask.id);
+      if (taskIndex !== -1) {
+        this.tasks.splice(taskIndex, 1, { ...this.tasks[taskIndex], ...editedTask });
+        this.saveTasksToLocalStorage();
+      }
+    },
     saveTasksToLocalStorage() {
-      const serializedTasks = JSON.stringify(this.tasks);
-      localStorage.setItem('tasks', serializedTasks);
+      try {
+        const serializedTasks = JSON.stringify(this.tasks);
+        localStorage.setItem('tasks', serializedTasks);
+      } catch (error) {
+        console.error('Error saving tasks to localStorage:', error);
+      }
     }
   },
   mounted() {
-    const savedTasks = localStorage.getItem('tasks');
-    if (savedTasks) {
-      this.tasks = JSON.parse(savedTasks);
+    try {
+      const savedTasks = localStorage.getItem('tasks');
+      if (savedTasks) {
+        this.tasks = JSON.parse(savedTasks);
+      }
+    } catch (error) {
+      console.error('Error loading tasks from localStorage:', error);
     }
   }
 };
@@ -102,7 +143,7 @@ export default {
   background-color: #a1bedb;
   border-radius: 5px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  max-width: 280px; /* Adjust the max-width as needed */
+  max-width: 450px; /* Adjust the max-width as needed */
   margin: 0 auto; /* Center the container horizontally */
 }
 

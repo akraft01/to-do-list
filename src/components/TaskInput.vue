@@ -1,41 +1,45 @@
 <template>
   <div class="task-list-container">
     <div class="task-input">
-      <input v-model="newTaskText" placeholder="New task" class="task-input-field"/>
-      <input v-model="newTaskDueDate" type="date" placeholder="Due date (YYYY-MM-DD)" class="task-input-field"/>
-      <select v-model="newTaskCategory" class="task-input-field"> <!-- select for category -->
+      <input v-model="newTaskText" placeholder="New task" class="task-input-field" />
+      <input v-model="newTaskDueDate" type="date" placeholder="Due date (YYYY-MM-DD)" class="task-input-field" />
+      <select v-model="newTaskCategory" class="task-input-field">
+        <!-- Select for category -->
         <option disabled value="">Please select a category</option>
         <option>Work</option>
         <option>Personal</option>
+        <option>Hobby</option>
         <option>Other</option>
       </select>
       <button @click="addTask" class="task-add-button">Add task</button>
     </div>
-    
   </div>
 </template>
 
 <script>
 export default {
-  
   data() {
     return {
       newTaskText: '',
       newTaskDueDate: '',
-      newTaskCategory: '' // data property for category
+      newTaskCategory: '' // Data property for category
     };
   },
   methods: {
     addTask() {
-      this.$emit('task-added', this.newTaskText, this.newTaskDueDate, this.newTaskCategory); // emit category
+      if (!this.newTaskText || !this.newTaskDueDate || !this.newTaskCategory) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      this.$emit('task-added', this.newTaskText, this.newTaskDueDate, this.newTaskCategory); // Emit category
       this.newTaskText = '';
       this.newTaskDueDate = '';
-      this.newTaskCategory = ''; // reset category
+      this.newTaskCategory = ''; // Reset category
     }
-  },
+  }
 };
 </script>
-
 
 <style scoped>
 .task-list-container {
@@ -51,7 +55,7 @@ export default {
   padding: 10px;
   background-color: #a1bedb;
   border-radius: 5px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .task-input-field {
